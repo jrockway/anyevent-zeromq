@@ -14,11 +14,8 @@ $pub->bind('tcp://127.0.0.1:1234');
 $sub->connect('tcp://127.0.0.1:1234');
 $sub->setsockopt(ZMQ_SUBSCRIBE, '');
 
-my $on_read = sub { die 'on read!?' };
 my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub );
-my $sub_h = AnyEvent::ZeroMQ::Handle->new(
-    socket => $sub, on_read => sub { $on_read->(@_) },
-);
+my $sub_h = AnyEvent::ZeroMQ::Handle->new( socket => $sub );
 
 ok $pub_h, 'got publish handle';
 ok $sub_h, 'got subscribe handle';
@@ -51,7 +48,7 @@ is $b, 'b', 'got b';
 my @r;
 $cv = AnyEvent->condvar;
 $cv->begin for 1..2;
-$on_read = sub { push @r, $_[1]; $cv->end };
+$sub_h->on_read(sub { push @r, $_[1]; $cv->end });
 $pub_h->push_write('c');
 $pub_h->push_write('d');
 $cv->recv;
