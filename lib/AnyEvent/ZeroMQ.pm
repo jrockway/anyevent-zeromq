@@ -28,10 +28,21 @@ sub io {
         poll => $poll,
         fh   => $fd,
         cb   => sub {
-            my $events = $sock->getsockopt(ZMQ_EVENTS);
-            $cb->() if (($events & $mask) == $mask);
+            $cb->() if (($sock->getsockopt(ZMQ_EVENTS) & $mask) == $mask);
         },
     );
+}
+
+sub can {
+    my ($class, %args) = @_;
+    my $poll = $args{poll}   || confess 'must supply poll direction';
+    my $sock = $args{socket} || confess 'must supply socket';
+
+    my $mask = $poll eq 'w' ? ZMQ_POLLOUT :
+               $poll eq 'r' ? ZMQ_POLLIN  :
+               confess "invalid poll direction '$poll'";
+
+    return (($sock->getsockopt(ZMQ_EVENTS) & $mask) == $mask)
 }
 
 1;
