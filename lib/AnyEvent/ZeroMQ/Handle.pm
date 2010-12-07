@@ -65,13 +65,18 @@ sub has_read_todo {
     return exists $self->read_buffer->[0];
 }
 
+sub readable {
+    my $self = shift;
+    return AnyEvent::ZeroMQ->can( poll => 'r', socket => $self->socket );
+}
+
 sub on_read {
     my $self = shift;
     $self->clear_read_watcher;
 
-    while(AnyEvent::ZeroMQ->can( poll => 'r', socket => $self->socket )
-          && (my $cb = shift @{$self->read_buffer})){
+    while($self->readable && $self->has_read_todo){
         try {
+            my $cb = shift @{$self->read_buffer};
             my $msg = ZeroMQ::Raw::Message->new;
             $self->socket->recv($msg, ZMQ_NOBLOCK);
             if($self->copy){
@@ -97,16 +102,21 @@ sub push_read {
 
 sub has_write_todo {
     my $self = shift;
-    return exists $self->read_buffer->[0];
+    return exists $self->write_buffer->[0];
+}
+
+sub writable {
+    my $self = shift;
+    return AnyEvent::ZeroMQ->can( poll => 'w', socket => $self->socket );
 }
 
 sub on_write {
     my $self = shift;
     $self->clear_write_watcher;
 
-    while(AnyEvent::ZeroMQ->can( poll => 'w', socket => $self->socket )
-          && (my $msg = shift @{$self->write_buffer})){
+    while($self->writable && $self->has_write_todo){
         try {
+            my $msg = shift @{$self->write_buffer};
             $self->socket->send($msg, ZMQ_NOBLOCK);
         }
         catch {
