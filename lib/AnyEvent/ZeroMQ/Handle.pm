@@ -22,7 +22,14 @@ has 'copy' => (
     default => 1, # preserve perl semantics by default
 );
 
-# has [qw/on_read on_drain on_error/] => (
+has 'on_read' => (
+    is        => 'rw',
+    isa       => 'CodeRef',
+    predicate => 'has_on_read',
+    clearer   => 'clear_on_read',
+);
+
+# has [qw/on_drain on_error/] => (
 #     is      => 'ro',
 #     isa     => 'CodeRef',
 #     default => sub { sub {} },
@@ -46,7 +53,7 @@ sub _build_read_watcher {
     return AnyEvent::ZeroMQ->io(
         poll   => 'r',
         socket => $self->socket,
-        cb     => sub { $self->on_read },
+        cb     => sub { $self->read },
     );
 }
 
@@ -56,7 +63,7 @@ sub _build_write_watcher {
     return AnyEvent::ZeroMQ->io(
         poll   => 'w',
         socket => $self->socket,
-        cb     => sub { $self->on_write },
+        cb     => sub { $self->write },
     );
 }
 
@@ -70,34 +77,42 @@ sub readable {
     return AnyEvent::ZeroMQ->can( poll => 'r', socket => $self->socket );
 }
 
-sub on_read {
+sub _read_once {
+    my ($self, $cb) = @_;
+    try {
+        my $msg = ZeroMQ::Raw::Message->new;
+        $self->socket->recv($msg, ZMQ_NOBLOCK);
+        if($self->copy){
+            $cb->($self, $msg->data);
+        }
+        else {
+            $cb->($self, $msg);
+        }
+    }
+    catch {
+        warn "Error in read handler: $_";
+    };
+}
+
+sub read {
     my $self = shift;
     $self->clear_read_watcher;
 
     while($self->readable && $self->has_read_todo){
-        try {
-            my $cb = shift @{$self->read_buffer};
-            my $msg = ZeroMQ::Raw::Message->new;
-            $self->socket->recv($msg, ZMQ_NOBLOCK);
-            if($self->copy){
-                $cb->($self, $msg->data);
-            }
-            else {
-                $cb->($self, $msg);
-            }
-        }
-        catch {
-            warn "Error in read handler: $_";
-        };
+        $self->_read_once(shift @{$self->read_buffer});
     }
 
-    $self->read_watcher if $self->has_read_todo;
+    while($self->readable && $self->has_on_read){
+        $self->_read_once($self->on_read);
+    }
+
+    $self->read_watcher if $self->has_read_todo || $self->has_on_read;
 }
 
 sub push_read {
     my ($self, $cb) = @_;
     push @{$self->read_buffer}, $cb;
-    $self->on_read;
+    $self->read;
 }
 
 sub has_write_todo {
@@ -110,7 +125,7 @@ sub writable {
     return AnyEvent::ZeroMQ->can( poll => 'w', socket => $self->socket );
 }
 
-sub on_write {
+sub write {
     my $self = shift;
     $self->clear_write_watcher;
 
@@ -131,7 +146,7 @@ sub push_write {
     my $self = shift;
     my $msg = ZeroMQ::Raw::Message->new_from_scalar($_[0]);
     push @{$self->write_buffer}, $msg;
-    $self->on_write;
+    $self->write;
 }
 
 __PACKAGE__->meta->make_immutable;
