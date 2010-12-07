@@ -14,8 +14,11 @@ $pub->bind('tcp://127.0.0.1:1234');
 $sub->connect('tcp://127.0.0.1:1234');
 $sub->setsockopt(ZMQ_SUBSCRIBE, '');
 
+my $on_read = sub { die 'on read!?' };
 my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub );
-my $sub_h = AnyEvent::ZeroMQ::Handle->new( socket => $sub );
+my $sub_h = AnyEvent::ZeroMQ::Handle->new(
+    socket => $sub, on_read => sub { $on_read->(@_) },
+);
 
 ok $pub_h, 'got publish handle';
 ok $sub_h, 'got subscribe handle';
@@ -44,17 +47,19 @@ $cv->recv;
 is $a, 'a', 'got a';
 is $b, 'b', 'got b';
 
-$pub_h->push_write('c');
-$pub_h->push_write('never read');
-
+# test the on_read callback
+my @r;
 $cv = AnyEvent->condvar;
-my $t = AnyEvent->timer(
-    after => 1,
-    cb => sub { $sub_h->push_read(sub { $cv->send($_[1]) }) }
-);
+$cv->begin for 1..2;
+$on_read = sub { push @r, $_[1]; $cv->end };
+$pub_h->push_write('c');
+$pub_h->push_write('d');
+$cv->recv;
+is_deeply \@r, [qw/c d/], 'read stuff via on_read';
 
-is $cv->recv, 'c', 'got c';
-
-EV::loop(); # ensure that no watchers remain
+# ensure that no watchers remain
+$sub_h->clear_on_read;
+$sub_h->read;
+EV::loop();
 
 done_testing;
