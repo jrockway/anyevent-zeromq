@@ -27,6 +27,7 @@ has 'on_read' => (
     isa       => 'CodeRef',
     predicate => 'has_on_read',
     clearer   => 'clear_on_read',
+    trigger   => sub { $_[0]->read },
 );
 
 # has [qw/on_drain on_error/] => (
@@ -96,7 +97,6 @@ sub _read_once {
 
 sub read {
     my $self = shift;
-    $self->clear_read_watcher;
 
     while($self->readable && $self->has_read_todo){
         $self->_read_once(shift @{$self->read_buffer});
@@ -106,7 +106,13 @@ sub read {
         $self->_read_once($self->on_read);
     }
 
-    $self->read_watcher if $self->has_read_todo || $self->has_on_read;
+    if($self->has_read_todo || $self->has_on_read){
+        # ensure we have a watcher
+        $self->read_watcher;
+    }
+    else {
+        $self->clear_read_watcher;
+    }
 }
 
 sub push_read {
