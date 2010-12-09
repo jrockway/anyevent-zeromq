@@ -6,7 +6,7 @@ use AnyEvent::ZeroMQ;
 use Scalar::Util qw(weaken);
 use Try::Tiny;
 use ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK);
-
+use Params::Util qw(_CODELIKE);
 use true;
 use namespace::autoclean;
 
@@ -131,14 +131,32 @@ sub writable {
     return AnyEvent::ZeroMQ->can( poll => 'w', socket => $self->socket );
 }
 
+sub build_message {
+    my ($self, $cb_or_msg) = @_;
+    my $msg = $cb_or_msg;
+
+    if(my $cb = _CODELIKE($cb_or_msg)){
+        $msg = $cb->($self);
+    }
+
+    return $msg
+        if ref $msg && blessed $msg &&
+            $msg->isa('ZeroMQ::Raw::Message');
+
+    return ZeroMQ::Raw::Message->new_from_scalar($msg)
+        if defined $msg;
+
+    return;
+}
+
 sub write {
     my $self = shift;
     $self->clear_write_watcher;
 
     while($self->writable && $self->has_write_todo){
         try {
-            my $msg = shift @{$self->write_buffer};
-            $self->socket->send($msg, ZMQ_NOBLOCK);
+            my $msg = $self->build_message(shift @{$self->write_buffer});
+            $self->socket->send($msg, ZMQ_NOBLOCK) if $msg;
         }
         catch {
             warn "Error in write handler: $_";
@@ -150,8 +168,14 @@ sub write {
 
 sub push_write {
     my $self = shift;
-    my $msg = ZeroMQ::Raw::Message->new_from_scalar($_[0]);
-    push @{$self->write_buffer}, $msg;
+
+    # $_[0] instead of a named var to avoid a copy.  zeromq, zero-copy :)
+    if(_CODELIKE($_[0]) || blessed $_[0] && $_[0]->isa('ZeroMQ::Raw::Message')){
+        push @{$self->write_buffer}, $_[0];
+    }
+    else {
+        push @{$self->write_buffer}, ZeroMQ::Raw::Message->new_from_scalar($_[0]);
+    }
     $self->write;
 }
 
