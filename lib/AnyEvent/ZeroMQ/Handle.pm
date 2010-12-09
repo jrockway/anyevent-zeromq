@@ -90,7 +90,7 @@ sub has_read_todo {
 
 sub readable {
     my $self = shift;
-    return AnyEvent::ZeroMQ->can( poll => 'r', socket => $self->socket );
+    return AnyEvent::ZeroMQ->probe( poll => 'r', socket => $self->socket );
 }
 
 sub _read_once {
@@ -143,7 +143,7 @@ sub has_write_todo {
 
 sub writable {
     my $self = shift;
-    return AnyEvent::ZeroMQ->can( poll => 'w', socket => $self->socket );
+    return AnyEvent::ZeroMQ->probe( poll => 'w', socket => $self->socket );
 }
 
 sub build_message {

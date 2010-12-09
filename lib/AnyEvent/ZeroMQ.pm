@@ -33,7 +33,7 @@ sub io {
     );
 }
 
-sub can {
+sub probe {
     my ($class, %args) = @_;
     my $poll = $args{poll}   || confess 'must supply poll direction';
     my $sock = $args{socket} || confess 'must supply socket';
