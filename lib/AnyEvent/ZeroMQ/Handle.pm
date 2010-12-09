@@ -8,6 +8,7 @@ use Try::Tiny;
 use ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK);
 use Params::Util qw(_CODELIKE);
 use true;
+use Guard;
 use namespace::autoclean;
 
 has 'socket' => (
@@ -45,11 +46,14 @@ sub handle_error {
     warn "AnyEvent::ZeroMQ::Handle: error in callback (ignoring): $str";
 }
 
-# has 'on_drain' => (
-#     is      => 'ro',
-#     isa     => 'CodeRef',
-#     default => sub { sub {} },
-# );
+has 'on_drain' => (
+    is        => 'rw',
+    isa       => 'CodeRef',
+    predicate => 'has_on_drain',
+    clearer   => 'clear_on_drain',
+    # i don't think we need to trigger this, since if we were
+    # writable, we would be drained.
+);
 
 has [qw/read_watcher write_watcher/] => (
     init_arg   => undef,
@@ -168,7 +172,9 @@ sub write {
     my $self = shift;
     $self->clear_write_watcher;
 
+    my $wrote_something = 0;
     while($self->writable && $self->has_write_todo){
+        $wrote_something++;
         try {
             my $msg = $self->build_message(shift @{$self->write_buffer});
             $self->socket->send($msg, ZMQ_NOBLOCK) if $msg;
@@ -177,6 +183,11 @@ sub write {
             $self->handle_error($_);
         }
     }
+
+    # XXX: the user is exposed to complexity here; he needs to clear
+    # the on_drain handler if he wants to push_write again.
+    $self->on_drain->($self, $self->writable)
+        if $wrote_something && $self->has_on_drain;
 
     $self->write_watcher if $self->has_write_todo;
 }
