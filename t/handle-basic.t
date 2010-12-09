@@ -56,13 +56,24 @@ $pub_h->push_write(sub { ZeroMQ::Raw::Message->new_from_scalar('d') });
 $cv->recv;
 is_deeply \@r, [qw/c d/], 'read stuff via on_read';
 
-# finally, test that nothing is sent when we return nothing from a
-# callback
+# test that nothing is sent when we return nothing from a callback
 ok !$sub_h->readable, 'nothing to read from subscription handle';
 $cv = AnyEvent->condvar;
 $pub_h->push_write( sub { $cv->send; return } );
 $cv->recv;
 ok !$sub_h->readable, "still not readable, since we didn't write anything";
+
+# test that on_error gets errors when we are bad.
+
+# also, writes on pubsub are guaranteed not to block, so we take
+# advantage of that guarantee for maximum not having to type the word
+# condvar.  except I just did, so that was pointless.
+
+my $error;
+$pub_h->on_error( sub { $error = shift } );
+$pub_h->push_write( sub { die 'oh noes' } );
+like $error, qr/oh noes/, 'got error via callback';
+# TODO: test the warning with Test::Warnings or something
 
 # ensure that no watchers remain
 $sub_h->clear_on_read;

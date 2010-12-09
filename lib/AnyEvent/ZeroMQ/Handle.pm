@@ -30,7 +30,22 @@ has 'on_read' => (
     trigger   => sub { $_[0]->read },
 );
 
-# has [qw/on_drain on_error/] => (
+has 'on_error' => (
+    is        => 'rw',
+    isa       => 'CodeRef',
+    predicate => 'has_on_error',
+    clearer   => 'clear_on_error',
+);
+
+sub handle_error {
+    my ($self, $str) = @_;
+    return $self->on_error->($str)
+        if $self->has_on_error;
+
+    warn "AnyEvent::ZeroMQ::Handle: error in callback (ignoring): $str";
+}
+
+# has 'on_drain' => (
 #     is      => 'ro',
 #     isa     => 'CodeRef',
 #     default => sub { sub {} },
@@ -91,7 +106,7 @@ sub _read_once {
         }
     }
     catch {
-        warn "Error in read handler: $_";
+        $self->handle_error($_);
     };
 }
 
@@ -159,7 +174,7 @@ sub write {
             $self->socket->send($msg, ZMQ_NOBLOCK) if $msg;
         }
         catch {
-            warn "Error in write handler: $_";
+            $self->handle_error($_);
         }
     }
 
