@@ -9,11 +9,17 @@ use ok 'AnyEvent::ZeroMQ::Reply';
 my $on_request;
 my $_on_request = sub { eval { $on_request->() } };
 
-my $c = ZeroMQ::Raw::Context->new( threads => 1 );
+my $ENDPOINT = 'inproc://#1';
+my $c = ZeroMQ::Raw::Context->new( threads => 0 );
+
+my $req = AnyEvent::ZeroMQ::Request->new(
+    context => $c,
+    bind    => $ENDPOINT,
+);
 
 my $rep = AnyEvent::ZeroMQ::Reply->new(
     context    => $c,
-    connect    => 'tcp://127.0.0.1:1234',
+    connect    => $ENDPOINT,
     on_request => sub {
         my ($h, $req) = @_;
         $_on_request->();
@@ -21,12 +27,6 @@ my $rep = AnyEvent::ZeroMQ::Reply->new(
         return $req;
     },
 );
-
-my $req = AnyEvent::ZeroMQ::Request->new(
-    context => $c,
-    bind    => 'tcp://127.0.0.1:1234',
-);
-
 
 my $reply;
 my $cv = AnyEvent->condvar;

@@ -6,8 +6,8 @@ use ok 'AnyEvent::ZeroMQ::Role::WithHandle';
 use ok 'AnyEvent::ZeroMQ::Publish';
 use ok 'AnyEvent::ZeroMQ::Subscribe';
 
-my $ENDPOINT = 'tcp://127.0.0.1:1236';
-my $c = ZeroMQ::Raw::Context->new( threads => 1 );
+my $ENDPOINT = 'inproc://#1';
+my $c = ZeroMQ::Raw::Context->new( threads => 0 );
 
 my $pub = AnyEvent::ZeroMQ::Publish->new(
     context => $c,

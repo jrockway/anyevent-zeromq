@@ -5,8 +5,8 @@ use Test::More;
 use AnyEvent::ZeroMQ::Publish;
 use AnyEvent::ZeroMQ::Subscribe;
 
-my $ENDPOINT = 'tcp://127.0.0.1:1236';
-my $c = ZeroMQ::Raw::Context->new( threads => 1 );
+my $ENDPOINT = 'inproc://#1';
+my $c = ZeroMQ::Raw::Context->new( threads => 0 );
 
 my $pub = AnyEvent::ZeroMQ::Publish->with_traits('Topics')->new(
     context => $c,
