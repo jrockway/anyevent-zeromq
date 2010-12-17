@@ -5,7 +5,7 @@ use Test::More;
 use EV;
 use AnyEvent::ZeroMQ::Handle;
 use ZeroMQ::Raw;
-use ZeroMQ::Raw::Constants qw(ZMQ_SUBSCRIBE ZMQ_PUB ZMQ_SUB ZMQ_NOBLOCK);
+use ZeroMQ::Raw::Constants qw(ZMQ_SUBSCRIBE ZMQ_PUB ZMQ_SUB ZMQ_NOBLOCK ZMQ_IDENTITY);
 
 my $c   = ZeroMQ::Raw::Context->new( threads => 10 );
 my $pub = ZeroMQ::Raw::Socket->new($c, ZMQ_PUB);
@@ -14,11 +14,18 @@ $pub->bind('tcp://127.0.0.1:1234');
 $sub->connect('tcp://127.0.0.1:1234');
 $sub->setsockopt(ZMQ_SUBSCRIBE, '');
 
-my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub );
+my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub, identity => 'pub_h' );
 my $sub_h = AnyEvent::ZeroMQ::Handle->new( socket => $sub );
 
 ok $pub_h, 'got publish handle';
 ok $sub_h, 'got subscribe handle';
+
+is $pub_h->identity, 'pub_h', 'got cached id';
+is $pub_h->socket->getsockopt( ZMQ_IDENTITY ), 'pub_h', 'got real id';
+
+$sub_h->identity('sub_h');
+is $sub_h->socket->getsockopt( ZMQ_IDENTITY ), 'sub_h',
+    'got real id after using accessor';
 
 my $cv = AnyEvent->condvar;
 $cv->begin for 1..2; # read x2

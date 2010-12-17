@@ -9,7 +9,7 @@ my @socket_constants =
 
 use ZeroMQ::Raw::Constants (@socket_constants);
 use MooseX::Types::Moose qw(Str Int);
-use MooseX::Types -declare => [qw/ZmqEndpoint SocketType SocketAction/];
+use MooseX::Types -declare => [qw/ZmqEndpoint SocketType SocketAction IdentityStr/];
 use true;
 
 subtype ZmqEndpoint, as Str, where {
@@ -46,3 +46,11 @@ subtype SocketType, as Int, where {
 subtype SocketAction, as Str, where {
     /^(bind|connect)$/;
 }, message { 'The action must be "bind" or "connect"' };
+
+subtype IdentityStr, as Str, where {
+    length $_ < 256 && length $_ > 1;
+    # it must also not start with \0, but that is technically legal
+    # and if the user wants to do it, it's between him and the man
+    # page authors. *i'm* not getting involved :)
+}, message { 'The identity must be non-empty and no more than 255 characters.' };
+

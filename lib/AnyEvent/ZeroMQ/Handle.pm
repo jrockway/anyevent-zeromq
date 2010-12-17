@@ -3,18 +3,27 @@ package AnyEvent::ZeroMQ::Handle;
 use Moose;
 
 use AnyEvent::ZeroMQ;
+use AnyEvent::ZeroMQ::Types qw(IdentityStr);
+use ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK ZMQ_IDENTITY);
+
+use Params::Util qw(_CODELIKE);
 use Scalar::Util qw(weaken);
 use Try::Tiny;
-use ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK);
-use Params::Util qw(_CODELIKE);
+
 use true;
-use Guard;
 use namespace::autoclean;
 
 has 'socket' => (
     is       => 'ro',
     isa      => 'ZeroMQ::Raw::Socket',
     required => 1,
+);
+
+has 'identity' => (
+    is         => 'rw',
+    isa        => IdentityStr,
+    lazy_build => 1,
+    trigger    => sub { shift->_change_identity(@_) },
 );
 
 has 'copy' => (
@@ -85,6 +94,16 @@ sub _build_write_watcher {
         socket => $self->socket,
         cb     => sub { $self->write },
     );
+}
+
+sub _build_identity {
+    my ($self) = @_;
+    return $self->socket->getsockopt( ZMQ_IDENTITY );
+}
+
+sub _change_identity {
+    my ($self, $new, $old) = @_;
+    return $self->socket->setsockopt( ZMQ_IDENTITY, $new );
 }
 
 sub has_read_todo {
