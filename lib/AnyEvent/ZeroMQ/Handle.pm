@@ -224,4 +224,7 @@ sub push_write {
     $self->write;
 }
 
+with 'AnyEvent::ZeroMQ::Handle::Role::Readable',
+     'AnyEvent::ZeroMQ::Handle::Role::Writable';
+
 __PACKAGE__->meta->make_immutable;
