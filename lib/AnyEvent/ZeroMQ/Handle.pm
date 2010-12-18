@@ -225,6 +225,7 @@ sub push_write {
 }
 
 with 'AnyEvent::ZeroMQ::Handle::Role::Readable',
-     'AnyEvent::ZeroMQ::Handle::Role::Writable';
+     'AnyEvent::ZeroMQ::Handle::Role::Writable',
+     'AnyEvent::ZeroMQ::Handle::Role::Generic';
 
 __PACKAGE__->meta->make_immutable;

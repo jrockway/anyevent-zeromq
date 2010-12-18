@@ -6,13 +6,9 @@ use namespace::autoclean;
 use ZeroMQ::Raw::Constants qw(ZMQ_PUSH);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_PUSH, socket_action => 'bind' };
+    { socket_type => ZMQ_PUSH, socket_action => 'bind', socket_direction => 'w' };
 
-sub BUILD {}
-
-has '+handle' => (
-    # XXX: deal with inability to set on_drain / on_error
-    handles => 'AnyEvent::ZeroMQ::Handle::Role::Writable',
-);
+with 'AnyEvent::ZeroMQ::Handle::Role::Generic',
+     'AnyEvent::ZeroMQ::Handle::Role::Writable';
 
 __PACKAGE__->meta->make_immutable;

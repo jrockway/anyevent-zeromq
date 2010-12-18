@@ -7,7 +7,7 @@ use Scalar::Util qw(weaken);
 use ZeroMQ::Raw::Constants qw(ZMQ_REP);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_REP, socket_action => 'connect' };
+    { socket_type => ZMQ_REP, socket_action => 'connect', socket_direction => '' };
 
 has 'on_request' => (
     is       => 'ro',
@@ -15,7 +15,7 @@ has 'on_request' => (
     required => 1,
 );
 
-sub BUILD {
+after 'BUILD' => sub {
     my $self = shift;
     my $h = $self->handle;
 
@@ -25,6 +25,8 @@ sub BUILD {
         my $res = $self->on_request->($self, $msg);
         $h->push_write($res);
     });
-}
+};
+
+with 'AnyEvent::ZeroMQ::Handle::Role::Generic';
 
 __PACKAGE__->meta->make_immutable;

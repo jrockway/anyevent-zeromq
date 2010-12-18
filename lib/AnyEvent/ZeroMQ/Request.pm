@@ -6,9 +6,7 @@ use namespace::autoclean;
 use ZeroMQ::Raw::Constants qw(ZMQ_REQ);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_REQ, socket_action => 'bind' };
-
-sub BUILD {}
+    { socket_type => ZMQ_REQ, socket_action => 'bind', socket_direction => '' };
 
 sub push_request {
     my ($self, $req, $handler, $hint) = @_;
@@ -22,5 +20,7 @@ sub push_request {
     }
     $self->handle->push_write($req);
 }
+
+with 'AnyEvent::ZeroMQ::Handle::Role::Generic';
 
 __PACKAGE__->meta->make_immutable;

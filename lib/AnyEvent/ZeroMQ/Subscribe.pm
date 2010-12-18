@@ -8,7 +8,8 @@ use Scalar::Util qw(weaken);
 use ZeroMQ::Raw::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_UNSUBSCRIBE);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_SUB, socket_action => 'connect' }, 'MooseX::Traits';
+    { socket_type => ZMQ_SUB, socket_action => 'connect', socket_direction => '' },
+    'MooseX::Traits';
 
 has '+_trait_namespace' => ( default => 'AnyEvent::ZeroMQ::Subscribe::Trait' );
 
@@ -79,9 +80,12 @@ sub _unsubscribe {
     $self->handle->socket->setsockopt(ZMQ_UNSUBSCRIBE, $topic);
 }
 
-sub BUILD {
+after 'BUILD' => sub {
     my $self = shift;
     $self->_subscribe($_) for $self->topics->members;
-}
+};
+
+with 'AnyEvent::ZeroMQ::Handle::Role::Generic',
+     'AnyEvent::ZeroMQ::Handle::Role::Readable';
 
 __PACKAGE__->meta->make_immutable;

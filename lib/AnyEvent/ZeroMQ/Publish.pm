@@ -1,17 +1,18 @@
 package AnyEvent::ZeroMQ::Publish;
 # ABSTRACT: Non-blocking OO abstraction over ZMQ_PUB publish/subscribe sockets
 use Moose;
+use MooseX::Aliases;
+
 use true;
 use namespace::autoclean;
 use ZeroMQ::Raw::Constants qw(ZMQ_PUB);
 use Params::Util qw(_CODELIKE);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_PUB, socket_action => 'bind' }, 'MooseX::Traits';
+    { socket_type => ZMQ_PUB, socket_action => 'bind', socket_direction => 'w' },
+    'MooseX::Traits';
 
 has '+_trait_namespace' => ( default => 'AnyEvent::ZeroMQ::Publish::Trait' );
-
-sub BUILD {}
 
 sub mangle_message {
     my ($self, $msg, %args) = @_;
@@ -33,5 +34,10 @@ sub publish {
         $self->handle->push_write($self->mangle_message($msg, %args));
     }
 }
+
+alias 'push_write' => 'publish';
+
+with 'AnyEvent::ZeroMQ::Handle::Role::Generic',
+     'AnyEvent::ZeroMQ::Handle::Role::Writable';
 
 __PACKAGE__->meta->make_immutable;

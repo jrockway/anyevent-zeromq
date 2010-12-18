@@ -9,7 +9,9 @@ my @socket_constants =
 
 use ZeroMQ::Raw::Constants (@socket_constants);
 use MooseX::Types::Moose qw(Str Int);
-use MooseX::Types -declare => [qw/ZmqEndpoint SocketType SocketAction IdentityStr/];
+use MooseX::Types -declare => [
+    qw/ZmqEndpoint SocketType SocketAction SocketDirection IdentityStr/
+];
 use true;
 
 subtype ZmqEndpoint, as Str, where {
@@ -54,3 +56,6 @@ subtype IdentityStr, as Str, where {
     # page authors. *i'm* not getting involved :)
 }, message { 'The identity must be non-empty and no more than 255 characters.' };
 
+subtype SocketDirection, as Str, where {
+    /^(r|rw|wr|w|)$/;
+}, message { "Socket direction must be r, w, rw, or the empty string; not '$_'" };
