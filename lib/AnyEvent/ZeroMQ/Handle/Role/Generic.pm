@@ -10,3 +10,5 @@ requires 'has_on_error';
 requires 'identity';
 requires 'has_identity';
 requires 'socket';
+requires 'bind';
+requires 'connect';

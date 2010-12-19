@@ -16,8 +16,17 @@ use namespace::autoclean;
 has 'socket' => (
     is       => 'ro',
     isa      => 'ZeroMQ::Raw::Socket',
+    handles  => [qw/bind connect/],
     required => 1,
 );
+
+after qw/bind connect/ => sub {
+    my $self = shift;
+    # this can change readability/writability status, so do the checks
+    # again
+    $self->read;
+    $self->write;
+};
 
 has 'identity' => (
     is         => 'rw',
