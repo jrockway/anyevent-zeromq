@@ -8,7 +8,7 @@ use Scalar::Util qw(weaken);
 use ZeroMQ::Raw::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_UNSUBSCRIBE);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_SUB, socket_action => 'connect', socket_direction => '' },
+    { socket_type => ZMQ_SUB, socket_direction => '' },
     'MooseX::Traits';
 
 has '+_trait_namespace' => ( default => 'AnyEvent::ZeroMQ::Subscribe::Trait' );

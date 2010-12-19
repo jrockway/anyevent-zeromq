@@ -6,7 +6,7 @@ use namespace::autoclean;
 use ZeroMQ::Raw::Constants qw(ZMQ_REQ);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_REQ, socket_action => 'bind', socket_direction => '' };
+    { socket_type => ZMQ_REQ, socket_direction => '' };
 
 sub push_request {
     my ($self, $req, $handler, $hint) = @_;

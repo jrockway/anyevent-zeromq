@@ -7,7 +7,7 @@ use Scalar::Util qw(weaken);
 use ZeroMQ::Raw::Constants qw(ZMQ_REP);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_REP, socket_action => 'connect', socket_direction => '' };
+    { socket_type => ZMQ_REP, socket_direction => '' };
 
 has 'on_request' => (
     is       => 'ro',

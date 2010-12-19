@@ -6,7 +6,7 @@ use namespace::autoclean;
 use ZeroMQ::Raw::Constants qw(ZMQ_PUSH);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_PUSH, socket_action => 'bind', socket_direction => 'w' };
+    { socket_type => ZMQ_PUSH, socket_direction => 'w' };
 
 with 'AnyEvent::ZeroMQ::Handle::Role::Generic',
      'AnyEvent::ZeroMQ::Handle::Role::Writable';

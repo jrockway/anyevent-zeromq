@@ -9,7 +9,7 @@ use ZeroMQ::Raw::Constants qw(ZMQ_PUB);
 use Params::Util qw(_CODELIKE);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
-    { socket_type => ZMQ_PUB, socket_action => 'bind', socket_direction => 'w' },
+    { socket_type => ZMQ_PUB, socket_direction => 'w' },
     'MooseX::Traits';
 
 has '+_trait_namespace' => ( default => 'AnyEvent::ZeroMQ::Publish::Trait' );
