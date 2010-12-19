@@ -8,13 +8,13 @@ my @socket_constants =
     qw(ZMQ_REQ ZMQ_REP ZMQ_PUSH ZMQ_PULL ZMQ_PUB ZMQ_SUB);
 
 use ZeroMQ::Raw::Constants (@socket_constants);
-use MooseX::Types::Moose qw(Str Int);
+use MooseX::Types::Moose qw(Str Int ArrayRef);
 use MooseX::Types -declare => [
-    qw/ZmqEndpoint SocketType SocketAction SocketDirection IdentityStr/
+    qw/Endpoint Endpoints SocketType SocketDirection IdentityStr/
 ];
 use true;
 
-subtype ZmqEndpoint, as Str, where {
+subtype Endpoint, as Str, where {
     # if you have a trailing slash on a tcp address, the entire
     # fucking program dies.  fucking C programmers!
 
@@ -36,18 +36,26 @@ subtype ZmqEndpoint, as Str, where {
 
 }, message { 'An endpoint must be in the form "<transport>://<address>"' };
 
-coerce ZmqEndpoint, from Str, via {
+subtype Endpoints, as ArrayRef[Endpoint], message {
+    'Each endpoint must be in the form "<transport>://<address>"';
+};
+
+sub fixup_endpoint() {
     s{(^[/])/$}{$1}g;
+}
+
+coerce Endpoint, from Str, via { fixup_endpoint };
+
+coerce Endpoints, from ArrayRef[Str], via {
+    my @array = @$_;
+    fixup_endpoint for @array;
+    $_ = [@array];
 };
 
 my %allowed_sockettype = map { ZeroMQ::Raw::Constants->$_ => $_ } @socket_constants;
 subtype SocketType, as Int, where {
     exists $allowed_sockettype{$_};
 }, message { 'A socket type must be one of: '. join(', ', @socket_constants) };
-
-subtype SocketAction, as Str, where {
-    /^(bind|connect)$/;
-}, message { 'The action must be "bind" or "connect"' };
 
 subtype IdentityStr, as Str, where {
     length $_ < 256 && length $_ > 1;

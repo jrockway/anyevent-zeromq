@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use AnyEvent::ZeroMQ::Types qw(ZmqEndpoint);
+use AnyEvent::ZeroMQ::Types qw(Endpoint);
 use Test::TableDriven (
     endpoint => {
         'foo'                          => 0,
@@ -23,7 +23,7 @@ use Test::TableDriven (
 
 sub endpoint {
     my $in = shift;
-    return ZmqEndpoint()->validate($in) ? 0 : 1;
+    return Endpoint()->validate($in) ? 0 : 1;
 }
 
 runtests;
