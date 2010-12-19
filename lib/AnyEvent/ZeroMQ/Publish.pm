@@ -16,7 +16,7 @@ has '+_trait_namespace' => ( default => 'AnyEvent::ZeroMQ::Publish::Trait' );
 
 sub mangle_message {
     my ($self, $msg, %args) = @_;
-    warn 'ignoring unused mangle arguments '. join(', ', map { '"$_"' } keys %args)
+    warn 'ignoring unused mangle arguments '. join(', ', map { "'$_'" } keys %args)
         if %args;
     return $msg;
 }
