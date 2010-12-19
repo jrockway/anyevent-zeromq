@@ -10,8 +10,8 @@ use ZeroMQ::Raw::Constants qw(ZMQ_SUBSCRIBE ZMQ_PUB ZMQ_SUB ZMQ_NOBLOCK ZMQ_IDEN
 my $c   = ZeroMQ::Raw::Context->new( threads => 10 );
 my $pub = ZeroMQ::Raw::Socket->new($c, ZMQ_PUB);
 my $sub = ZeroMQ::Raw::Socket->new($c, ZMQ_SUB);
-$pub->bind('tcp://127.0.0.1:1234');
-$sub->connect('tcp://127.0.0.1:1234');
+$pub->bind('tcp://127.0.0.1:1235');
+$sub->connect('tcp://127.0.0.1:1235');
 $sub->setsockopt(ZMQ_SUBSCRIBE, '');
 
 my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub, identity => 'pub_h' );
