@@ -35,12 +35,6 @@ has 'identity' => (
     trigger    => sub { shift->_change_identity(@_) },
 );
 
-has 'copy' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 1, # preserve perl semantics by default
-);
-
 has 'on_read' => (
     is        => 'rw',
     isa       => 'CodeRef',
@@ -130,12 +124,7 @@ sub _read_once {
     try {
         my $msg = ZeroMQ::Raw::Message->new;
         $self->socket->recv($msg, ZMQ_NOBLOCK);
-        if($self->copy){
-            $cb->($self, $msg->data);
-        }
-        else {
-            $cb->($self, $msg);
-        }
+        $cb->($self, $msg->data);
     }
     catch {
         $self->handle_error($_);
@@ -221,14 +210,13 @@ sub write {
 }
 
 sub push_write {
-    my $self = shift;
+    my ($self, $msg) = @_;
 
-    # $_[0] instead of a named var to avoid a copy.  zeromq, zero-copy :)
-    if(_CODELIKE($_[0]) || blessed $_[0] && $_[0]->isa('ZeroMQ::Raw::Message')){
-        push @{$self->write_buffer}, $_[0];
+    if(_CODELIKE($msg) || blessed $msg && $msg->isa('ZeroMQ::Raw::Message')){
+        push @{$self->write_buffer}, $msg;
     }
     else {
-        push @{$self->write_buffer}, ZeroMQ::Raw::Message->new_from_scalar($_[0]);
+        push @{$self->write_buffer}, ZeroMQ::Raw::Message->new_from_scalar($msg);
     }
     $self->write;
 }
