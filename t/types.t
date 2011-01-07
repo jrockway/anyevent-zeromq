@@ -18,6 +18,7 @@ use Test::TableDriven (
         'pgm://'                       => 0,
         'egpm://'                      => 0,
         'ipc://'                       => 0,
+        'tcp://*:1234'                 => 1,
     },
 );
 

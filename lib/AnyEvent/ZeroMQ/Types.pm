@@ -26,7 +26,7 @@ subtype Endpoint, as Str, where {
     if(my ($proto, $rest) = m{^([a-z]+)://(.+)$}){
         return 1 if $proto eq 'inproc';
         return 1 if $proto eq 'ipc';
-        return 1 if $proto eq 'tcp' && $rest =~ /^(?:$host|$ip|$interface)$andport$/;
+        return 1 if $proto eq 'tcp' && $rest =~ /^(?:$host|$ip|$interface|\*)$andport$/;
         return 1
             if ($proto eq 'pgm' || $proto eq 'epgm') &&
                 $rest =~ /^(?:$interface|$ip);$ip$andport$/;
