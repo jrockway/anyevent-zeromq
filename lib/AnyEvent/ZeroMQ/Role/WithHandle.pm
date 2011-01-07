@@ -102,18 +102,20 @@ role {
 
         my $socket = ZeroMQ::Raw::Socket->new($self->context, $type);
 
-        for my $bind ($self->bound_to){
-            $socket->bind($bind);
-        }
-
-        for my $connect ($self->connected_to){
-            $socket->connect($connect);
-        }
-
-        return AnyEvent::ZeroMQ::Handle->new(
+        my $h = AnyEvent::ZeroMQ::Handle->new(
             socket => $socket,
             %{$self->_extra_initargs || {}},
         );
+
+        for my $bind ($self->bound_to){
+            $h->bind($bind);
+        }
+
+        for my $connect ($self->connected_to){
+            $h->connect($connect);
+        }
+
+        return $h;
     };
 
     # this does a few things:

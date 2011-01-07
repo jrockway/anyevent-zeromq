@@ -20,6 +20,10 @@ has 'socket' => (
     required => 1,
 );
 
+before qw/bind connect/ => sub {
+    $_[0]->identity;
+};
+
 after qw/bind connect/ => sub {
     my $self = shift;
     # this can change readability/writability status, so do the checks
@@ -29,7 +33,8 @@ after qw/bind connect/ => sub {
 };
 
 has 'identity' => (
-    is         => 'rw',
+    is         => 'rw',    # note: you can change this, but it has
+                           # no effect until a new bind/connect.
     isa        => IdentityStr,
     lazy_build => 1,
     trigger    => sub { shift->_change_identity(@_) },

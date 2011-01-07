@@ -58,7 +58,7 @@ subtype SocketType, as Int, where {
 }, message { 'A socket type must be one of: '. join(', ', @socket_constants) };
 
 subtype IdentityStr, as Str, where {
-    length $_ < 256 && length $_ > 1;
+    length $_ < 256 && length $_ >= 0;
     # it must also not start with \0, but that is technically legal
     # and if the user wants to do it, it's between him and the man
     # page authors. *i'm* not getting involved :)
