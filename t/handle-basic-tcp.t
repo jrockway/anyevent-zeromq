@@ -7,12 +7,9 @@ use AnyEvent::ZeroMQ::Handle;
 use ZeroMQ::Raw;
 use ZeroMQ::Raw::Constants qw(ZMQ_SUBSCRIBE ZMQ_PUB ZMQ_SUB ZMQ_NOBLOCK ZMQ_IDENTITY);
 
-my $c   = ZeroMQ::Raw::Context->new( threads => 10 );
+my $c   = ZeroMQ::Raw::Context->new( threads => 1 );
 my $pub = ZeroMQ::Raw::Socket->new($c, ZMQ_PUB);
 my $sub = ZeroMQ::Raw::Socket->new($c, ZMQ_SUB);
-$pub->bind('tcp://127.0.0.1:1235');
-$sub->connect('tcp://127.0.0.1:1235');
-$sub->setsockopt(ZMQ_SUBSCRIBE, '');
 
 my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub, identity => 'pub_h' );
 my $sub_h = AnyEvent::ZeroMQ::Handle->new( socket => $sub );
@@ -27,6 +24,10 @@ $sub_h->identity('sub_h');
 is $sub_h->socket->getsockopt( ZMQ_IDENTITY ), 'sub_h',
     'got real id after using accessor';
 
+$pub->bind('tcp://127.0.0.1:1235');
+$sub->connect('tcp://127.0.0.1:1235');
+$sub->setsockopt(ZMQ_SUBSCRIBE, '');
+
 my $cv = AnyEvent->condvar;
 $cv->begin for 1..2; # read x2
 
@@ -34,21 +35,23 @@ my ($a, $b);
 $sub_h->push_read(sub {
     my ($h, $data) = @_;
     $a = $data;
+    pass 'got first piece of data';
     $cv->end;
 });
 
 $sub_h->push_read(sub {
     my ($h, $data) = @_;
     $b = $data;
+    pass 'got second piece of data';
     $cv->end;
 });
 
 my $made_b = 0;
 my $drained = 0;
 
-$pub_h->on_drain( sub { $drained = 1 } );
+$pub_h->on_drain( sub { pass 'drained'; $drained = 1 } );
 $pub_h->push_write('a');
-$pub_h->push_write(sub { $made_b = 1; return 'b' });
+$pub_h->push_write(sub { pass 'write called'; $made_b = 1; return 'b' });
 
 $cv->recv;
 
