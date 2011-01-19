@@ -127,6 +127,7 @@ sub readable {
 
 sub _read_once {
     my ($self, $cb) = @_;
+    local $! = 0;
     try {
         my $msg = ZeroMQ::Raw::Message->new;
         $self->socket->recv($msg, ZMQ_NOBLOCK);
@@ -204,6 +205,7 @@ sub write {
     while($self->writable && $self->has_write_todo){
         $wrote_something++;
         my $buf;
+        local $! = 0;
         try {
             $buf = shift @{$self->write_buffer};
             my $msg = $self->build_message($buf);
