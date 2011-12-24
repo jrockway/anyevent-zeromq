@@ -41,10 +41,10 @@ subtype Endpoints, as ArrayRef[Endpoint], message {
 };
 
 sub fixup_endpoint() {
-    s{(^[/])/$}{$1}g;
+    s{(^[/])/\z}{$1}g;
 }
 
-coerce Endpoint, from Str, via { fixup_endpoint };
+coerce Endpoint, from Str, via { fixup_endpoint; $_ };
 
 coerce Endpoints, from ArrayRef[Str], via {
     my @array = @$_;
