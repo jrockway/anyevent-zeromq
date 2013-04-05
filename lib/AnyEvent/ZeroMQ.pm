@@ -5,10 +5,16 @@ use warnings;
 
 use ZMQ;
 use ZMQ::Constants qw(ZMQ_FD ZMQ_POLLIN ZMQ_POLLOUT ZMQ_EVENTS);
-use Carp qw(confess);
-
-use namespace::autoclean;
+BEGIN {
+    no strict 'refs';
+    *zmq_strerror = \&{$ZMQ::BACKEND . '::zmq_strerror'};
+}
 use AnyEvent;
+use Carp qw(croak confess);
+use namespace::autoclean;
+
+use Exporter::Tidy
+      errors => [qw( _zfail )];
 
 sub io {
     my ($class, %args) = @_;
@@ -17,8 +23,7 @@ sub io {
     my $cb   = $args{cb}     || confess 'must supply cb';
 
     my $fd = $sock->getsockopt(ZMQ_FD);
-    confess 'getsockopt did not return a valid fd!'
-        unless defined $fd;
+    defined($fd) or _zfail('getsockopt(ZMQ_FD)');
 
     my $mask = $poll eq 'w' ? ZMQ_POLLOUT :
                $poll eq 'r' ? ZMQ_POLLIN  :
@@ -43,6 +48,12 @@ sub probe {
                confess "invalid poll direction '$poll'";
 
     return (($sock->getsockopt(ZMQ_EVENTS) & $mask) == $mask)
+}
+
+sub _zfail {
+    my $self = shift;
+    my $err = $!;
+    confess(join('', @_, ': ', zmq_strerror($err)));
 }
 
 1;

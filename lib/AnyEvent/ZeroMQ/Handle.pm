@@ -2,7 +2,7 @@ package AnyEvent::ZeroMQ::Handle;
 # ABSTRACT: AnyEvent::Handle-like interface for 0MQ sockets
 use Moose;
 
-use AnyEvent::ZeroMQ;
+use AnyEvent::ZeroMQ qw(_zfail);
 use AnyEvent::ZeroMQ::Types qw(IdentityStr);
 
 use ZMQ::Constants qw(ZMQ_NOBLOCK ZMQ_IDENTITY);
@@ -21,21 +21,8 @@ use namespace::autoclean;
 has 'socket' => (
     is       => 'ro',
     isa      => 'ZMQ::Socket',
-    handles  => [qw/bind connect/],
     required => 1,
 );
-
-before qw/bind connect/ => sub {
-    $_[0]->identity;
-};
-
-after qw/bind connect/ => sub {
-    my $self = shift;
-    # this can change readability/writability status, so do the checks
-    # again
-    $self->read;
-    $self->write;
-};
 
 has 'identity' => (
     is         => 'rw',    # note: you can change this, but it has
@@ -118,6 +105,26 @@ sub _change_identity {
     my ($self, $new, $old) = @_;
     return $self->socket->setsockopt( ZMQ_IDENTITY, $new );
 }
+
+for my $meth (qw/bind connect/) {
+    my $impl = sub {
+        my $self = shift;
+
+        $self->identity;
+
+        if ($self->socket->$meth(@_) < 0) {
+            _zfail($meth);
+        }
+
+        # this can change readability/writability status, so do the checks again
+        $self->read;
+        $self->write;
+
+        0;
+    };
+    no strict 'refs';
+    *$meth = $impl;
+};
 
 sub has_read_todo {
     my $self = shift;
