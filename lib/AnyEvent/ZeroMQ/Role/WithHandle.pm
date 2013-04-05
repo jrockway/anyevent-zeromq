@@ -9,7 +9,7 @@ use AnyEvent::ZeroMQ::Handle;
 use AnyEvent::ZeroMQ::Handle::Role::Generic;
 use AnyEvent::ZeroMQ::Handle::Role::Readable;
 use AnyEvent::ZeroMQ::Handle::Role::Writable;
-use ZeroMQ::Raw;
+use ZMQ;
 use Try::Tiny;
 use Carp qw(confess);
 use namespace::autoclean;
@@ -35,7 +35,7 @@ role {
 
     has 'context' => (
         is       => 'ro',
-        isa      => 'ZeroMQ::Raw::Context',
+        isa      => 'ZMQ::Context',
         required => 1,
     );
 
@@ -100,7 +100,7 @@ role {
     method '_build_handle' => sub {
         my $self = shift;
 
-        my $socket = ZeroMQ::Raw::Socket->new($self->context, $type);
+        my $socket = $self->context->socket($type);
 
         my $h = AnyEvent::ZeroMQ::Handle->new(
             socket => $socket,

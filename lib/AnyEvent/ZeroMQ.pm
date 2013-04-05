@@ -3,8 +3,8 @@ package AnyEvent::ZeroMQ;
 use strict;
 use warnings;
 
-use ZeroMQ::Raw;
-use ZeroMQ::Raw::Constants qw(ZMQ_FD ZMQ_POLLIN ZMQ_POLLOUT ZMQ_EVENTS);
+use ZMQ;
+use ZMQ::Constants qw(ZMQ_FD ZMQ_POLLIN ZMQ_POLLOUT ZMQ_EVENTS);
 use Carp qw(confess);
 
 use namespace::autoclean;

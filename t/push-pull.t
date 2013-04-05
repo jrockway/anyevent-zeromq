@@ -7,7 +7,7 @@ use ok 'AnyEvent::ZeroMQ::Pull';
 
 my $ENDPOINT = 'inproc://#1';
 
-my @c = (context => ZeroMQ::Raw::Context->new( threads => 0 ));
+my @c = (context => ZMQ::Context->new(0));
 
 my $server   = AnyEvent::ZeroMQ::Push->new( @c, bind    => $ENDPOINT );
 my $client_a = AnyEvent::ZeroMQ::Pull->new( @c, connect => $ENDPOINT );

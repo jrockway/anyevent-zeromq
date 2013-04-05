@@ -5,7 +5,7 @@ use MooseX::Aliases;
 
 use true;
 use namespace::autoclean;
-use ZeroMQ::Raw::Constants qw(ZMQ_PUB);
+use ZMQ::Constants qw(ZMQ_PUB);
 use Params::Util qw(_CODELIKE);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>

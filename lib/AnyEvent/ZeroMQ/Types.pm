@@ -7,7 +7,7 @@ use Regexp::Common qw /net/;
 my @socket_constants =
     qw(ZMQ_REQ ZMQ_REP ZMQ_PUSH ZMQ_PULL ZMQ_PUB ZMQ_SUB);
 
-use ZeroMQ::Raw::Constants (@socket_constants);
+use ZMQ::Constants (@socket_constants);
 use MooseX::Types::Moose qw(Str Int ArrayRef);
 use MooseX::Types -declare => [
     qw/Endpoint Endpoints SocketType SocketDirection IdentityStr/
@@ -52,7 +52,7 @@ coerce Endpoints, from ArrayRef[Str], via {
     $_ = [@array];
 };
 
-my %allowed_sockettype = map { ZeroMQ::Raw::Constants->$_ => $_ } @socket_constants;
+my %allowed_sockettype = map { ZMQ::Constants->$_ => $_ } @socket_constants;
 subtype SocketType, as Int, where {
     exists $allowed_sockettype{$_};
 }, message { 'A socket type must be one of: '. join(', ', @socket_constants) };

@@ -3,7 +3,7 @@ package AnyEvent::ZeroMQ::Request;
 use Moose;
 use true;
 use namespace::autoclean;
-use ZeroMQ::Raw::Constants qw(ZMQ_REQ);
+use ZMQ::Constants qw(ZMQ_REQ);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
     { socket_type => ZMQ_REQ, socket_direction => '' };
