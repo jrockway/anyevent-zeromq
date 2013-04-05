@@ -2,6 +2,13 @@ use strict;
 use warnings;
 use Test::More;
 
+eval { use ZMQ; };
+BEGIN {
+    if (($ZMQ::BACKEND || '') eq 'ZMQ::LibZMQ3') {
+        plan skip_all => 'zeromq 3.x does not support arbitrary mix of bind/connect with pub/sub';
+    }
+}
+
 use ok 'AnyEvent::ZeroMQ::Role::WithHandle';
 use ok 'AnyEvent::ZeroMQ::Publish';
 use ok 'AnyEvent::ZeroMQ::Subscribe';
