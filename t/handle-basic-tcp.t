@@ -4,12 +4,12 @@ use Test::More;
 
 use EV;
 use AnyEvent::ZeroMQ::Handle;
-use ZeroMQ::Raw;
-use ZeroMQ::Raw::Constants qw(ZMQ_SUBSCRIBE ZMQ_PUB ZMQ_SUB ZMQ_NOBLOCK ZMQ_IDENTITY);
+use ZMQ;
+use ZMQ::Constants qw(ZMQ_SUBSCRIBE ZMQ_PUB ZMQ_SUB ZMQ_NOBLOCK ZMQ_IDENTITY);
 
-my $c   = ZeroMQ::Raw::Context->new( threads => 1 );
-my $pub = ZeroMQ::Raw::Socket->new($c, ZMQ_PUB);
-my $sub = ZeroMQ::Raw::Socket->new($c, ZMQ_SUB);
+my $c   = ZMQ::Context->new(1);
+my $pub = $c->socket(ZMQ_PUB);
+my $sub = $c->socket(ZMQ_SUB);
 
 my $pub_h = AnyEvent::ZeroMQ::Handle->new( socket => $pub, identity => 'pub_h' );
 my $sub_h = AnyEvent::ZeroMQ::Handle->new( socket => $sub );
@@ -66,8 +66,8 @@ my @r;
 $cv = AnyEvent->condvar;
 $cv->begin for 1..2;
 $sub_h->on_read(sub { push @r, $_[1]; $cv->end });
-$pub_h->push_write(ZeroMQ::Raw::Message->new_from_scalar('c'));
-$pub_h->push_write(sub { ZeroMQ::Raw::Message->new_from_scalar('d') });
+$pub_h->push_write(ZMQ::Message->new('c'));
+$pub_h->push_write(sub { ZMQ::Message->new('d') });
 $cv->recv;
 is_deeply \@r, [qw/c d/], 'read stuff via on_read';
 

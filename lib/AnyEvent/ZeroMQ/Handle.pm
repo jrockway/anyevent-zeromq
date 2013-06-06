@@ -2,9 +2,13 @@ package AnyEvent::ZeroMQ::Handle;
 # ABSTRACT: AnyEvent::Handle-like interface for 0MQ sockets
 use Moose;
 
-use AnyEvent::ZeroMQ;
+use AnyEvent::ZeroMQ qw(_zfail);
 use AnyEvent::ZeroMQ::Types qw(IdentityStr);
-use ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK ZMQ_IDENTITY);
+
+use ZMQ::Constants qw(ZMQ_NOBLOCK ZMQ_IDENTITY);
+my $V2 = ($ZMQ::BACKEND eq 'ZMQ::LibZMQ2');
+my $sendmsg = $V2 ? 'send' : 'sendmsg';
+my $recvmsg = $V2 ? 'recv' : 'recvmsg';
 
 use Params::Util qw(_CODELIKE);
 use Scalar::Util qw(weaken);
@@ -16,22 +20,9 @@ use namespace::autoclean;
 
 has 'socket' => (
     is       => 'ro',
-    isa      => 'ZeroMQ::Raw::Socket',
-    handles  => [qw/bind connect/],
+    isa      => 'ZMQ::Socket',
     required => 1,
 );
-
-before qw/bind connect/ => sub {
-    $_[0]->identity;
-};
-
-after qw/bind connect/ => sub {
-    my $self = shift;
-    # this can change readability/writability status, so do the checks
-    # again
-    $self->read;
-    $self->write;
-};
 
 has 'identity' => (
     is         => 'rw',    # note: you can change this, but it has
@@ -115,6 +106,26 @@ sub _change_identity {
     return $self->socket->setsockopt( ZMQ_IDENTITY, $new );
 }
 
+for my $meth (qw/bind connect/) {
+    my $impl = sub {
+        my $self = shift;
+
+        $self->identity;
+
+        if ($self->socket->$meth(@_) < 0) {
+            _zfail($meth);
+        }
+
+        # this can change readability/writability status, so do the checks again
+        $self->read;
+        $self->write;
+
+        0;
+    };
+    no strict 'refs';
+    *$meth = $impl;
+};
+
 sub has_read_todo {
     my $self = shift;
     return exists $self->read_buffer->[0];
@@ -129,8 +140,7 @@ sub _read_once {
     my ($self, $cb) = @_;
     local $! = 0;
     try {
-        my $msg = ZeroMQ::Raw::Message->new;
-        $self->socket->recv($msg, ZMQ_NOBLOCK);
+        my $msg = $self->socket->$recvmsg(ZMQ_NOBLOCK);
         $cb->($self, $msg->data);
     }
     catch {
@@ -189,9 +199,9 @@ sub build_message {
 
     return $msg
         if ref $msg && blessed $msg &&
-            $msg->isa('ZeroMQ::Raw::Message');
+            $msg->isa('ZMQ::Message');
 
-    return ZeroMQ::Raw::Message->new_from_scalar($msg)
+    return ZMQ::Message->new($msg)
         if defined $msg;
 
     return;
@@ -209,7 +219,7 @@ sub write {
         try {
             $buf = shift @{$self->write_buffer};
             my $msg = $self->build_message($buf);
-            $self->socket->send($msg, ZMQ_NOBLOCK) if $msg;
+            $self->socket->$sendmsg($msg, ZMQ_NOBLOCK) if $msg;
         }
         catch {
             if($! == EWOULDBLOCK || $! == EAGAIN){
@@ -237,11 +247,11 @@ sub write {
 sub push_write {
     my ($self, $msg) = @_;
 
-    if(_CODELIKE($msg) || blessed $msg && $msg->isa('ZeroMQ::Raw::Message')){
+    if(_CODELIKE($msg) || blessed $msg && $msg->isa('ZMQ::Message')){
         push @{$self->write_buffer}, $msg;
     }
     else {
-        push @{$self->write_buffer}, ZeroMQ::Raw::Message->new_from_scalar($msg);
+        push @{$self->write_buffer}, ZMQ::Message->new($msg);
     }
     $self->write;
 }

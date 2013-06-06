@@ -1,4 +1,10 @@
 Change history for AnyEvent-ZeroMQ
 {{$NEXT}}
+0.0102   Fri Apr 5 13:31:09 2013 -0700
+    * convert to ZMQ instead of obsolete ZeroMQ::Raw
+    * throw exceptions on connect and bind errors
+
+0.0101   Fri Dec 23 17:36:29 2011 -0800
+    * fix Moose coercion of endpoint
 
 0.01     Sun May 15 11:23:09 CDT 2011

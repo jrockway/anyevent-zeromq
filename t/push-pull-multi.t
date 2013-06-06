@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use ZeroMQ::Raw::Context;
+use ZMQ::Context;
 
 use ok 'AnyEvent::ZeroMQ::Push';
 use ok 'AnyEvent::ZeroMQ::Pull';
@@ -10,7 +10,7 @@ my $ENDPOINT_A = 'inproc://#A';
 my $ENDPOINT_B = 'inproc://#B';
 my $ENDPOINT_C = 'inproc://#C';
 
-my $c = ZeroMQ::Raw::Context->new( threads => 0 );
+my $c = ZMQ::Context->new(0);
 
 #     __PULL____                 __PULL____
 #    /          \               /          \

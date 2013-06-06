@@ -6,7 +6,7 @@ use AnyEvent::ZeroMQ::Publish;
 use AnyEvent::ZeroMQ::Subscribe;
 
 my $ENDPOINT = 'inproc://#1';
-my $c = ZeroMQ::Raw::Context->new( threads => 0 );
+my $c = ZMQ::Context->new(0);
 
 my $pub = AnyEvent::ZeroMQ::Publish->with_traits('Topics')->new(
     context => $c,

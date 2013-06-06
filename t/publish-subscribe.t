@@ -7,7 +7,8 @@ use ok 'AnyEvent::ZeroMQ::Publish';
 use ok 'AnyEvent::ZeroMQ::Subscribe';
 
 my $ENDPOINT = 'inproc://#1';
-my $c = ZeroMQ::Raw::Context->new( threads => 0 );
+
+my $c = ZMQ::Context->new(0);
 
 my $pub = AnyEvent::ZeroMQ::Publish->new(
     context => $c,

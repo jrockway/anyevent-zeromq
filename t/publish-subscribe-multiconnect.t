@@ -2,6 +2,13 @@ use strict;
 use warnings;
 use Test::More;
 
+eval { use ZMQ; };
+BEGIN {
+    if (($ZMQ::BACKEND || '') eq 'ZMQ::LibZMQ3') {
+        plan skip_all => 'zeromq 3.x does not support arbitrary mix of bind/connect with pub/sub';
+    }
+}
+
 use ok 'AnyEvent::ZeroMQ::Role::WithHandle';
 use ok 'AnyEvent::ZeroMQ::Publish';
 use ok 'AnyEvent::ZeroMQ::Subscribe';
@@ -9,7 +16,7 @@ use ok 'AnyEvent::ZeroMQ::Subscribe';
 my $ENDPOINT1 = 'inproc://#1';
 my $ENDPOINT2 = 'inproc://#2';
 
-my $c = ZeroMQ::Raw::Context->new( threads => 0 );
+my $c = ZMQ::Context->new(0);
 
 my $sub = AnyEvent::ZeroMQ::Subscribe->new(
     context => $c,

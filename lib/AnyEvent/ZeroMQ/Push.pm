@@ -3,7 +3,7 @@ package AnyEvent::ZeroMQ::Push;
 use Moose;
 use true;
 use namespace::autoclean;
-use ZeroMQ::Raw::Constants qw(ZMQ_PUSH);
+use ZMQ::Constants qw(ZMQ_PUSH);
 
 with 'AnyEvent::ZeroMQ::Role::WithHandle' =>
     { socket_type => ZMQ_PUSH, socket_direction => 'w' };

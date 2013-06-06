@@ -10,7 +10,7 @@ my $on_request;
 my $_on_request = sub { eval { $on_request->() } };
 
 my $ENDPOINT = 'inproc://#1';
-my $c = ZeroMQ::Raw::Context->new( threads => 0 );
+my $c = ZMQ::Context->new(0);
 
 my $req = AnyEvent::ZeroMQ::Request->new(
     context => $c,
